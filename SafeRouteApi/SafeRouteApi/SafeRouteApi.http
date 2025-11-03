@@ -1,0 +1,6 @@
+@SafeRouteApi_HostAddress = http://localhost:5208
+
+GET {{SafeRouteApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
