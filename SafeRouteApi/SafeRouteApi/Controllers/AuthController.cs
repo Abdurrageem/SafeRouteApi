@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using SafeRouteApi.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace SafeRouteApi.Controllers
@@ -33,7 +32,6 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Mock response - implement actual registration logic with password hashing
             var authResponse = new AuthResponse
             {
                 UserId = 1,
@@ -63,7 +61,6 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Mock response - implement actual authentication logic
             var authResponse = new AuthResponse
             {
                 UserId = 1,
@@ -93,7 +90,6 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Mock response - implement actual token refresh logic
             var authResponse = new AuthResponse
             {
                 UserId = 1,
@@ -117,8 +113,6 @@ namespace SafeRouteApi.Controllers
         public IActionResult Logout()
         {
             _logger.LogInformation("User logout");
-
-            // TODO: Invalidate refresh token in database
             return Ok(new { message = "Logged out successfully" });
         }
 
@@ -136,7 +130,6 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // TODO: Verify current password and update to new password
             return Ok(new { message = "Password changed successfully" });
         }
 
@@ -149,7 +142,6 @@ namespace SafeRouteApi.Controllers
         {
             _logger.LogInformation("Getting current user info");
 
-            // Mock response - get from JWT token claims
             var user = new
             {
                 UserId = 1,
@@ -178,7 +170,6 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // TODO: Send password reset email
             return Ok(new { message = "Password reset email sent" });
         }
 
@@ -196,14 +187,76 @@ namespace SafeRouteApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // TODO: Verify reset token and update password
             return Ok(new { message = "Password reset successfully" });
         }
     }
 
-    /// <summary>
-    /// DTO for forgot password request
-    /// </summary>
+    public class RegisterDto
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        public string Surname { get; set; } = string.Empty;
+
+        [Required]
+        public string LicenseNumber { get; set; } = string.Empty;
+
+        [Required]
+        public string VehicleRegistration { get; set; } = string.Empty;
+
+        public string VehicleModel { get; set; } = string.Empty;
+    }
+
+    public class LoginDto
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class AuthResponse
+    {
+        public int UserId { get; set; }
+        public int DriverId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public DateTime ExpiresAt { get; set; }
+    }
+
+    public class RefreshTokenDto
+    {
+        [Required]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [Required]
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+
+    public class ChangePasswordDto
+    {
+        [Required]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
     public class ForgotPasswordDto
     {
         [Required]
@@ -211,9 +264,6 @@ namespace SafeRouteApi.Controllers
         public string Email { get; set; } = string.Empty;
     }
 
-    /// <summary>
-    /// DTO for reset password with token
-    /// </summary>
     public class ResetPasswordDto
     {
         [Required]

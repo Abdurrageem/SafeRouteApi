@@ -22,11 +22,11 @@ namespace SafeRouteApi.Controllers
         {
             _logger.LogInformation("Getting all drivers");
 
-            var drivers = new List<Driver>
+            var drivers = new List<Drivers>
             {
-                new Driver
+                new Drivers
                 {
-                    Id = 1,
+                    DriverId = 1,
                     UserId = 1,
                     Name = "John",
                     Surname = "Mbeki",
@@ -34,9 +34,9 @@ namespace SafeRouteApi.Controllers
                     VehicleRegistration = "CAW 12345",
                     VehicleModel = "Toyota Hilux 2021"
                 },
-                new Driver
+                new Drivers
                 {
-                    Id = 2,
+                    DriverId = 2,
                     UserId = 2,
                     Name = "Sarah",
                     Surname = "van der Walt",
@@ -57,9 +57,9 @@ namespace SafeRouteApi.Controllers
         {
             _logger.LogInformation($"Getting driver with ID: {id}");
 
-            var driver = new Driver
+            var driver = new Drivers
             {
-                Id = id,
+                DriverId = id,
                 UserId = 1,
                 Name = "John",
                 Surname = "Mbeki",
