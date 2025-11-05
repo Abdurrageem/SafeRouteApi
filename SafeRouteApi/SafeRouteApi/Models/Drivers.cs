@@ -40,6 +40,9 @@ namespace SafeRouteApi.Models
         [MaxLength(100)]
         public string VehicleModel { get; set; } = string.Empty; // vehicle model
 
+        [Required]
+        public int PackageAmount { get; set; } // Number of packages being delivered
+
         // Navigation properties
         public virtual ICollection<EmergencyContacts> EmergencyContacts { get; set; } = new List<EmergencyContacts>();
         public virtual ICollection<Routes> Routes { get; set; } = new List<Routes>();
