@@ -271,7 +271,7 @@ namespace SafeRouteApi.Controllers
         /// PUT: api/riskzones/{id}/incident
         /// Report an incident in a risk zone (increments incident count)
         /// </summary>
-        [HttpPut("{id}/incident", Name = "ReportIncident")]
+        [HttpPut("{id}/incident", Name = "ReportRiskZoneIncident")]
         public IActionResult ReportIncident(int id)
         {
             _logger.LogInformation($"Reporting incident in risk zone {id}");
