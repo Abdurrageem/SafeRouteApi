@@ -1,109 +1,71 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SafeRouteApi.Models;
+using SafeRouteApi.Services.Interfaces;
+using SafeRouteApi.DTOs.Common;
+using SafeRouteApi.DTOs.Drivers;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRouteApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class DriversController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class DriversController : ControllerBase
+    private readonly ILogger<DriversController> _logger;
+    private readonly IDriverService _drivers;
+
+    public DriversController(ILogger<DriversController> logger, IDriverService drivers)
+    { _logger = logger; _drivers = drivers; }
+
+    /// <summary>
+    /// GET: api/drivers
+    /// </summary>
+    [HttpGet(Name = "GetAllDrivers")]
+    public async Task<IActionResult> GetAll([FromQuery] PaginationParams page)
     {
-        private readonly ILogger<DriversController> _logger;
-
-        public DriversController(ILogger<DriversController> logger)
-        {
-            _logger = logger;
-        }
-
-        /// <summary>
-        /// GET: api/drivers
-        /// </summary>
-        [HttpGet(Name = "GetAllDrivers")]
-        public IActionResult GetAll()
-        {
-            _logger.LogInformation("Getting all drivers");
-
-            var drivers = new List<Drivers>
-            {
-                new Drivers
-                {
-                    DriverId = 1,
-                    UserId = 1,
-                    Name = "John",
-                    Surname = "Mbeki",
-                    LicenseNumber = "CA-123-456",
-                    VehicleRegistration = "CAW 12345",
-                    VehicleModel = "Toyota Hilux 2021"
-                },
-                new Drivers
-                {
-                    DriverId = 2,
-                    UserId = 2,
-                    Name = "Sarah",
-                    Surname = "van der Walt",
-                    LicenseNumber = "CA-789-012",
-                    VehicleRegistration = "CAW 67890",
-                    VehicleModel = "Ford Ranger 2022"
-                }
-            };
-
-            return Ok(drivers);
-        }
-
-        /// <summary>
-        /// GET: api/drivers/{id}
-        /// </summary>
-        [HttpGet("{id}", Name = "GetDriverById")]
-        public IActionResult GetById(int id)
-        {
-            _logger.LogInformation($"Getting driver with ID: {id}");
-
-            var driver = new Drivers
-            {
-                DriverId = id,
-                UserId = 1,
-                Name = "John",
-                Surname = "Mbeki",
-                LicenseNumber = "CA-123-456",
-                VehicleRegistration = "CAW 12345",
-                VehicleModel = "Toyota Hilux 2021"
-            };
-
-            return Ok(driver);
-        }
-
-        /// <summary>
-        /// GET: api/drivers/{id}/stats
-        /// </summary>
-        [HttpGet("{id}/stats", Name = "GetDriverStats")]
-        public IActionResult GetStats(int id)
-        {
-            _logger.LogInformation($"Getting stats for driver {id}");
-
-            var stats = new DriverStats
-            {
-                DriverId = id,
-                Name = "John Mbeki",
-                TotalRoutes = 45,
-                CompletedRoutes = 42,
-                ActiveRoutes = 1,
-                TotalNotifications = 23,
-                UnreadNotifications = 5,
-                SafetyScore = 4.8
-            };
-
-            return Ok(stats);
-        }
+        _logger.LogInformation("GetAll drivers page {Page} size {Size}", page.Page, page.PageSize);
+        var (items, total) = await _drivers.GetDriversAsync(page);
+        return Ok(new { total, items });
     }
 
-    public class DriverStats
+    /// <summary>
+    /// GET: api/drivers/{id}
+    /// </summary>
+    [HttpGet("{id}", Name = "GetDriverById")]
+    public async Task<ActionResult<DriverDetailDto>> GetById(int id)
     {
-        public int DriverId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public int TotalRoutes { get; set; }
-        public int CompletedRoutes { get; set; }
-        public int ActiveRoutes { get; set; }
-        public int TotalNotifications { get; set; }
-        public int UnreadNotifications { get; set; }
-        public double SafetyScore { get; set; }
+        var driver = await _drivers.GetDriverAsync(id);
+        if (driver == null) return NotFound();
+        return Ok(driver);
+    }
+
+    /// <summary>
+    /// POST: api/drivers
+    /// </summary>
+    [HttpPost(Name = "CreateDriver")]
+    public async Task<IActionResult> Create([FromBody] CreateDriverDto dto)
+    {
+        var id = await _drivers.CreateDriverAsync(dto.Name, dto.Surname, dto.LicenseNumber, dto.VehicleRegistration, dto.VehicleModel, dto.UserId);
+        return CreatedAtRoute("GetDriverById", new { id }, new { id });
+    }
+
+    /// <summary>
+    /// PUT: api/drivers/{id}
+    /// </summary>
+    [HttpPut("{id}", Name = "UpdateDriver")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateDriverDto dto)
+    {
+        var ok = await _drivers.UpdateDriverAsync(id, dto.Name, dto.Surname, dto.VehicleRegistration, dto.VehicleModel);
+        if (!ok) return NotFound();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// DELETE: api/drivers/{id}
+    /// </summary>
+    [HttpDelete("{id}", Name = "DeleteDriver")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var ok = await _drivers.DeleteDriverAsync(id);
+        if (!ok) return NotFound();
+        return NoContent();
     }
 }

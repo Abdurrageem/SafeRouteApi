@@ -1,276 +1,88 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using SafeRouteApi.Data;
+using Microsoft.EntityFrameworkCore;
+using SafeRouteApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using SafeRouteApi.DTOs.Auth;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRouteApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
 {
-    /// <summary>
-    /// API Controller for authentication - Login required first
-    /// Phase 1: Core Functionality
-    /// </summary>
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    private readonly ILogger<AuthController> _logger;
+    private readonly SafeRouteDbContext _db;
+    private readonly ITokenService _tokens;
+    private readonly IPasswordHasher _hasher;
+
+    public AuthController(ILogger<AuthController> logger, SafeRouteDbContext db, ITokenService tokens, IPasswordHasher hasher)
+    { _logger = logger; _db = db; _tokens = tokens; _hasher = hasher; }
+
+    [HttpPost("register"), AllowAnonymous]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        private readonly ILogger<AuthController> _logger;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (await _db.Users.AnyAsync(u => u.Email == dto.Email)) return Conflict(new { message = "Email already registered" });
 
-        public AuthController(ILogger<AuthController> logger)
+        var company = await _db.Companies.FirstOrDefaultAsync();
+        if (company == null)
         {
-            _logger = logger;
+            company = new Companies { Name = "Default Co", Address = "", CompanyRegistration = "REG-1", Email = "default@co.com", ContactNumber = "000" };
+            _db.Companies.Add(company);
+            await _db.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// POST: api/auth/register
-        /// Register a new user account
-        /// </summary>
-        [HttpPost("register", Name = "Register")]
-        public IActionResult Register([FromBody] RegisterDto dto)
-        {
-            _logger.LogInformation($"Registering new user: {dto.Email}");
+        var user = new Users { CompanyId = company.CompanyId, Email = dto.Email, Password = _hasher.Hash(dto.Password), Role = "Driver", CreatedAt = DateTime.UtcNow, UpdateAt = DateTime.UtcNow };
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var driver = new Drivers { UserId = user.UserId, Name = dto.Name, Surname = dto.Surname, LicenseNumber = dto.LicenseNumber, VehicleRegistration = dto.VehicleRegistration, VehicleModel = dto.VehicleModel };
+        _db.Drivers.Add(driver);
+        await _db.SaveChangesAsync();
 
-            var authResponse = new AuthResponse
-            {
-                UserId = 1,
-                DriverId = 1,
-                Email = dto.Email,
-                Name = $"{dto.Name} {dto.Surname}",
-                Role = "Driver",
-                AccessToken = "mock_access_token_" + Guid.NewGuid().ToString(),
-                RefreshToken = "mock_refresh_token_" + Guid.NewGuid().ToString(),
-                ExpiresAt = DateTime.UtcNow.AddHours(24)
-            };
-
-            return CreatedAtRoute("GetDriverById", new { id = authResponse.DriverId }, authResponse);
-        }
-
-        /// <summary>
-        /// POST: api/auth/login
-        /// Login with email and password
-        /// </summary>
-        [HttpPost("login", Name = "Login")]
-        public IActionResult Login([FromBody] LoginDto dto)
-        {
-            _logger.LogInformation($"User login attempt: {dto.Email}");
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var authResponse = new AuthResponse
-            {
-                UserId = 1,
-                DriverId = 1,
-                Email = dto.Email,
-                Name = "John Mbeki",
-                Role = "Driver",
-                AccessToken = "mock_access_token_" + Guid.NewGuid().ToString(),
-                RefreshToken = "mock_refresh_token_" + Guid.NewGuid().ToString(),
-                ExpiresAt = DateTime.UtcNow.AddHours(24)
-            };
-
-            return Ok(authResponse);
-        }
-
-        /// <summary>
-        /// POST: api/auth/refresh
-        /// Refresh access token using refresh token
-        /// </summary>
-        [HttpPost("refresh", Name = "RefreshToken")]
-        public IActionResult RefreshToken([FromBody] RefreshTokenDto dto)
-        {
-            _logger.LogInformation("Refreshing access token");
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var authResponse = new AuthResponse
-            {
-                UserId = 1,
-                DriverId = 1,
-                Email = "john.mbeki@example.com",
-                Name = "John Mbeki",
-                Role = "Driver",
-                AccessToken = "mock_access_token_" + Guid.NewGuid().ToString(),
-                RefreshToken = "mock_refresh_token_" + Guid.NewGuid().ToString(),
-                ExpiresAt = DateTime.UtcNow.AddHours(24)
-            };
-
-            return Ok(authResponse);
-        }
-
-        /// <summary>
-        /// POST: api/auth/logout
-        /// Logout current user
-        /// </summary>
-        [HttpPost("logout", Name = "Logout")]
-        public IActionResult Logout()
-        {
-            _logger.LogInformation("User logout");
-            return Ok(new { message = "Logged out successfully" });
-        }
-
-        /// <summary>
-        /// POST: api/auth/change-password
-        /// Change user password
-        /// </summary>
-        [HttpPost("change-password", Name = "ChangePassword")]
-        public IActionResult ChangePassword([FromBody] ChangePasswordDto dto)
-        {
-            _logger.LogInformation("User password change request");
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(new { message = "Password changed successfully" });
-        }
-
-        /// <summary>
-        /// GET: api/auth/me
-        /// Get current authenticated user info
-        /// </summary>
-        [HttpGet("me", Name = "GetCurrentUser")]
-        public IActionResult GetCurrentUser()
-        {
-            _logger.LogInformation("Getting current user info");
-
-            var user = new
-            {
-                UserId = 1,
-                DriverId = 1,
-                Email = "john.mbeki@example.com",
-                Name = "John Mbeki",
-                Role = "Driver",
-                IsActive = true,
-                EmailConfirmed = true
-            };
-
-            return Ok(user);
-        }
-
-        /// <summary>
-        /// POST: api/auth/forgot-password
-        /// Request password reset email
-        /// </summary>
-        [HttpPost("forgot-password", Name = "ForgotPassword")]
-        public IActionResult ForgotPassword([FromBody] ForgotPasswordDto dto)
-        {
-            _logger.LogInformation($"Password reset requested for: {dto.Email}");
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(new { message = "Password reset email sent" });
-        }
-
-        /// <summary>
-        /// POST: api/auth/reset-password
-        /// Reset password with token from email
-        /// </summary>
-        [HttpPost("reset-password", Name = "ResetPassword")]
-        public IActionResult ResetPassword([FromBody] ResetPasswordDto dto)
-        {
-            _logger.LogInformation("Password reset with token");
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            return Ok(new { message = "Password reset successfully" });
-        }
+        var token = _tokens.CreateToken(user.UserId, user.Role, user.Email);
+        _logger.LogInformation("User registered {UserId}", user.UserId);
+        return Ok(new { user.UserId, driver.DriverId, token });
     }
 
-    public class RegisterDto
+    [HttpPost("login"), AllowAnonymous]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        [MinLength(6)]
-        public string Password { get; set; } = string.Empty;
-
-        [Required]
-        public string Name { get; set; } = string.Empty;
-
-        [Required]
-        public string Surname { get; set; } = string.Empty;
-
-        [Required]
-        public string LicenseNumber { get; set; } = string.Empty;
-
-        [Required]
-        public string VehicleRegistration { get; set; } = string.Empty;
-
-        public string VehicleModel { get; set; } = string.Empty;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var user = await _db.Users.Include(u => u.Driver).FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null || !_hasher.Verify(user.Password, dto.Password)) return Unauthorized(new { message = "Invalid credentials" });
+        var token = _tokens.CreateToken(user.UserId, user.Role, user.Email);
+        _logger.LogInformation("User login {UserId}", user.UserId);
+        return Ok(new { user.UserId, user.Email, user.Role, DriverId = user.Driver?.DriverId ?? 0, token });
     }
 
-    public class LoginDto
+    [HttpGet("me"), Authorize]
+    public async Task<IActionResult> Me()
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        public string Password { get; set; } = string.Empty;
+        var idClaim = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (idClaim == null || !int.TryParse(idClaim, out var userId)) return Unauthorized();
+        var user = await _db.Users.Include(u => u.Driver).FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+        return Ok(new { user.UserId, user.Email, user.Role, Driver = user.Driver == null ? null : new { user.Driver.DriverId, user.Driver.Name } });
     }
 
-    public class AuthResponse
+    public class ChangePasswordDto { [Required] public string CurrentPassword { get; set; } = string.Empty; [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty; }
+
+    [HttpPost("change-password"), Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
-        public int UserId { get; set; }
-        public int DriverId { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public string AccessToken { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
-        public DateTime ExpiresAt { get; set; }
-    }
-
-    public class RefreshTokenDto
-    {
-        [Required]
-        public string AccessToken { get; set; } = string.Empty;
-
-        [Required]
-        public string RefreshToken { get; set; } = string.Empty;
-    }
-
-    public class ChangePasswordDto
-    {
-        [Required]
-        public string CurrentPassword { get; set; } = string.Empty;
-
-        [Required]
-        [MinLength(6)]
-        public string NewPassword { get; set; } = string.Empty;
-    }
-
-    public class ForgotPasswordDto
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-    }
-
-    public class ResetPasswordDto
-    {
-        [Required]
-        public string Token { get; set; } = string.Empty;
-
-        [Required]
-        [MinLength(6)]
-        public string NewPassword { get; set; } = string.Empty;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var idClaim = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (idClaim == null || !int.TryParse(idClaim, out var userId)) return Unauthorized();
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+        if (!_hasher.Verify(user.Password, dto.CurrentPassword)) return Unauthorized(new { message = "Current password invalid" });
+        user.Password = _hasher.Hash(dto.NewPassword);
+        user.UpdateAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Password changed {UserId}", userId);
+        return NoContent();
     }
 }
