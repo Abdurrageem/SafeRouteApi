@@ -229,3 +229,34 @@ Artifacts/
 **/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
+
+# ---------------------------
+# SafeRoute API Sensitive Config
+# ---------------------------
+
+# Ignore configuration files that contain secrets
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+
+# Optionally ignore main appsettings.json if secrets are stored there
+# (If you keep a safe, non-secret version for deployment, rename it to appsettings.template.json)
+appsettings.json
+
+# ---------------------------
+# Environment and Secret Keys
+# ---------------------------
+.env
+.env.*
+*.key
+*.secret
+secrets.json
+
+# ---------------------------
+# User-specific or build files
+# ---------------------------
+*.user
+.vs/
+.vscode/
+bin/
+obj/
