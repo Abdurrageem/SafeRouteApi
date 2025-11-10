@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Models;
+using SafeRouteSharedLib.Models;
 
 namespace SafeRouteApi.Data
 {
@@ -10,7 +10,7 @@ namespace SafeRouteApi.Data
         {
         }
 
-        // DbSets for all models
+        // DbSets for all models (from shared library)
         public DbSet<Users> Users { get; set; } = default!;
         public DbSet<Companies> Companies { get; set; } = default!;
         public DbSet<Drivers> Drivers { get; set; } = default!;

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SafeRouteApi.Models;
+using SafeRouteSharedLib.Models;
 
 namespace SafeRouteApi.Controllers
 {
@@ -28,56 +28,11 @@ namespace SafeRouteApi.Controllers
 
             var riskZones = new List<RiskZones>
             {
-                new RiskZones
-                {
-                    ZoneId = 1,
-                    Name = "Nyanga",
-                    Latitude = -34.0276f,
-                    Longitude = 18.5881f,
-                    IncidentCount = 45,
-                    LastIncident = DateTime.Now.AddDays(-2),
-                    RiskLevel = "High"
-                },
-                new RiskZones
-                {
-                    ZoneId = 2,
-                    Name = "Khayelitsha",
-                    Latitude = -34.0290f,
-                    Longitude = 18.6790f,
-                    IncidentCount = 38,
-                    LastIncident = DateTime.Now.AddDays(-1),
-                    RiskLevel = "High"
-                },
-                new RiskZones
-                {
-                    ZoneId = 3,
-                    Name = "Philippi",
-                    Latitude = -34.0022f,
-                    Longitude = 18.5946f,
-                    IncidentCount = 22,
-                    LastIncident = DateTime.Now.AddDays(-5),
-                    RiskLevel = "Medium"
-                },
-                new RiskZones
-                {
-                    ZoneId = 4,
-                    Name = "Chapman's Peak Drive",
-                    Latitude = -34.0928f,
-                    Longitude = 18.3551f,
-                    IncidentCount = 12,
-                    LastIncident = DateTime.Now.AddDays(-10),
-                    RiskLevel = "Medium"
-                },
-                new RiskZones
-                {
-                    ZoneId = 5,
-                    Name = "N1 - N2 Interchange",
-                    Latitude = -33.9416f,
-                    Longitude = 18.5041f,
-                    IncidentCount = 8,
-                    LastIncident = DateTime.Now.AddDays(-3),
-                    RiskLevel = "Low"
-                }
+                new RiskZones { ZoneId = 1, Name = "Nyanga", Latitude = -34.0276f, Longitude = 18.5881f, IncidentCount = 45, LastIncident = DateTime.Now.AddDays(-2), RiskLevel = "High" },
+                new RiskZones { ZoneId = 2, Name = "Khayelitsha", Latitude = -34.0290f, Longitude = 18.6790f, IncidentCount = 38, LastIncident = DateTime.Now.AddDays(-1), RiskLevel = "High" },
+                new RiskZones { ZoneId = 3, Name = "Philippi", Latitude = -34.0022f, Longitude = 18.5946f, IncidentCount = 22, LastIncident = DateTime.Now.AddDays(-5), RiskLevel = "Medium" },
+                new RiskZones { ZoneId = 4, Name = "Chapman's Peak Drive", Latitude = -34.0928f, Longitude = 18.3551f, IncidentCount = 12, LastIncident = DateTime.Now.AddDays(-10), RiskLevel = "Medium" },
+                new RiskZones { ZoneId = 5, Name = "N1 - N2 Interchange", Latitude = -33.9416f, Longitude = 18.5041f, IncidentCount = 8, LastIncident = DateTime.Now.AddDays(-3), RiskLevel = "Low" }
             };
 
             return Ok(riskZones);
