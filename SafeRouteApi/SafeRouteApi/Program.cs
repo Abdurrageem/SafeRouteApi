@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using SafeRouteApi.Data;
 using System.Text;
@@ -15,8 +14,6 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
-        // Local URLs (match launchSettings)
         builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
 
         builder.Services.AddControllers();
@@ -24,32 +21,19 @@ public class Program
         builder.Services.AddSwaggerGen();
         builder.Services.AddOpenApi();
 
-        // Choose DB provider: prefer SQLite in Development if configured
-        var useSqlite = builder.Configuration.GetValue<bool>("UseSqlite");
-        if (useSqlite)
+        // Always use fresh SQLite file for local dev (regenerates schema each run if flag set)
+        var sqliteConn = builder.Configuration.GetConnectionString("SafeRouteSqlite") ?? "Data Source=saferoute.db";
+        var rebuild = builder.Configuration.GetValue<bool>("RebuildSqlite");
+
+        if (rebuild && File.Exists("saferoute.db"))
         {
-            var sqlite = builder.Configuration.GetConnectionString("SafeRouteSqlite") ?? "Data Source=saferoute.db";
-            builder.Services.AddDbContext<SafeRouteDbContext>(options =>
-            {
-                options.UseSqlite(sqlite);
-                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
-            });
+            File.Delete("saferoute.db");
         }
-        else
+
+        builder.Services.AddDbContext<SafeRouteDbContext>(options =>
         {
-            var conn = builder.Configuration.GetConnectionString("SafeRouteDb");
-            if (string.IsNullOrWhiteSpace(conn))
-            {
-                // Prefer the SafeRouteDB LocalDB instance for local development (Option 1)
-                conn = "Server=(localdb)\\SafeRouteDB;Database=SafeRouteApiDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
-            }
-            builder.Services.AddDbContext<SafeRouteDbContext>(options =>
-            {
-                options.UseSqlServer(conn);
-                // Suppress pending model changes warning (treat as log only during dev seeding)
-                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
-            });
-        }
+            options.UseSqlite(sqliteConn);
+        });
 
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddMemoryCache();
@@ -79,20 +63,9 @@ public class Program
         builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         builder.Services.AddScoped<IDriverService, DriverService>();
         builder.Services.AddScoped<IRouteService, RouteService>();
-
-        // Removed registration of conventional middleware to avoid resolving RequestDelegate via DI
-        // builder.Services.AddTransient<ExceptionHandlingMiddleware>();
         builder.Services.AddTransient<SeedData>();
 
-        WebApplication app;
-        try
-        {
-            app = builder.Build();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Host build failed: " + ex); throw; // surface root cause
-        }
+        var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
         {
@@ -100,32 +73,25 @@ public class Program
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "SafeRoute API v1");
-                c.RoutePrefix = "swagger"; // UI at /swagger
+                c.RoutePrefix = "swagger";
             });
             app.MapOpenApi();
         }
 
-        // seed wrapped to log inner exceptions explicitly
+        // Build brand new schema then seed
         using (var scope = app.Services.CreateScope())
         {
-            try
-            {
-                var seeder = scope.ServiceProvider.GetRequiredService<SeedData>();
-                await seeder.InitializeAsync();
-            }
-            catch (Exception ex)
-            {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "Seeding failed");
-                throw; // fail fast so issue is visible
-            }
+            var db = scope.ServiceProvider.GetRequiredService<SafeRouteDbContext>();
+            await db.Database.EnsureDeletedAsync(); // ensure no stale schema
+            await db.Database.EnsureCreatedAsync(); // create from current model
+            var seeder = scope.ServiceProvider.GetRequiredService<SeedData>();
+            await seeder.InitializeAsync();
         }
 
         app.UseHttpsRedirection();
         app.UseCors("DefaultCors");
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.MapControllers();
         await app.RunAsync();
     }
@@ -159,19 +125,3 @@ public class TokenService : ITokenService
 public interface IPasswordHasher { string Hash(string input); bool Verify(string hash, string input); }
 public class BcryptPasswordHasher : IPasswordHasher
 { public string Hash(string input) => BCrypt.Net.BCrypt.HashPassword(input); public bool Verify(string hash, string input) => BCrypt.Net.BCrypt.Verify(input, hash); }
-
-public class ExceptionHandlingMiddleware
-{
-    private readonly RequestDelegate _next; private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger){ _next = next; _logger = logger; }
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try { await _next(context); }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unhandled exception");
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new { error = "ServerError", message = ex.Message });
-        }
-    }
-}
