@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using SafeRouteApi.Data;
 using System.Text;
@@ -15,22 +16,47 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Local URLs (match launchSettings)
+        builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
+
         builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
         builder.Services.AddOpenApi();
 
-        // DbContext
-        var conn = builder.Configuration.GetConnectionString("SafeRouteDb");
-        builder.Services.AddDbContext<SafeRouteDbContext>(options => options.UseSqlServer(conn));
+        // Choose DB provider: prefer SQLite in Development if configured
+        var useSqlite = builder.Configuration.GetValue<bool>("UseSqlite");
+        if (useSqlite)
+        {
+            var sqlite = builder.Configuration.GetConnectionString("SafeRouteSqlite") ?? "Data Source=saferoute.db";
+            builder.Services.AddDbContext<SafeRouteDbContext>(options =>
+            {
+                options.UseSqlite(sqlite);
+                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            });
+        }
+        else
+        {
+            var conn = builder.Configuration.GetConnectionString("SafeRouteDb");
+            if (string.IsNullOrWhiteSpace(conn))
+            {
+                // Prefer the SafeRouteDB LocalDB instance for local development (Option 1)
+                conn = "Server=(localdb)\\SafeRouteDB;Database=SafeRouteApiDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
+            }
+            builder.Services.AddDbContext<SafeRouteDbContext>(options =>
+            {
+                options.UseSqlServer(conn);
+                // Suppress pending model changes warning (treat as log only during dev seeding)
+                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            });
+        }
 
-        // AutoMapper profile assembly
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddMemoryCache();
 
-        // CORS
         var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
         builder.Services.AddCors(o => o.AddPolicy("DefaultCors", p => p.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 
-        // JWT secret from env override
         var jwtSection = builder.Configuration.GetSection("Jwt");
         var envKey = Environment.GetEnvironmentVariable("SAFEROUTE_JWT_KEY");
         var key = Encoding.UTF8.GetBytes(envKey ?? jwtSection["Key"] ?? "dev-key");
@@ -49,30 +75,50 @@ public class Program
                 };
             });
 
-        // Services
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         builder.Services.AddScoped<IDriverService, DriverService>();
         builder.Services.AddScoped<IRouteService, RouteService>();
 
-        // Middleware
-        builder.Services.AddTransient<ExceptionHandlingMiddleware>();
-
-        // Seed
+        // Removed registration of conventional middleware to avoid resolving RequestDelegate via DI
+        // builder.Services.AddTransient<ExceptionHandlingMiddleware>();
         builder.Services.AddTransient<SeedData>();
 
-        var app = builder.Build();
+        WebApplication app;
+        try
+        {
+            app = builder.Build();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Host build failed: " + ex); throw; // surface root cause
+        }
 
         if (app.Environment.IsDevelopment())
         {
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SafeRoute API v1");
+                c.RoutePrefix = "swagger"; // UI at /swagger
+            });
             app.MapOpenApi();
         }
 
-        // Run seed at startup
+        // seed wrapped to log inner exceptions explicitly
         using (var scope = app.Services.CreateScope())
         {
-            var seeder = scope.ServiceProvider.GetRequiredService<SeedData>();
-            await seeder.InitializeAsync();
+            try
+            {
+                var seeder = scope.ServiceProvider.GetRequiredService<SeedData>();
+                await seeder.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "Seeding failed");
+                throw; // fail fast so issue is visible
+            }
         }
 
         app.UseHttpsRedirection();
@@ -81,11 +127,10 @@ public class Program
         app.UseAuthorization();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.MapControllers();
-        app.Run();
+        await app.RunAsync();
     }
 }
 
-// Token service & password hasher
 public interface ITokenService { string CreateToken(int userId, string role, string email); }
 public class TokenService : ITokenService
 {
@@ -115,7 +160,6 @@ public interface IPasswordHasher { string Hash(string input); bool Verify(string
 public class BcryptPasswordHasher : IPasswordHasher
 { public string Hash(string input) => BCrypt.Net.BCrypt.HashPassword(input); public bool Verify(string hash, string input) => BCrypt.Net.BCrypt.Verify(input, hash); }
 
-// Global exception handling middleware
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next; private readonly ILogger<ExceptionHandlingMiddleware> _logger;
