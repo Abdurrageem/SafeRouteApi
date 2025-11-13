@@ -1,7 +1,7 @@
-using SafeRouteApi.DTOs.Common;
-using SafeRouteApi.DTOs.Drivers;
+using SafeRoute.DTOs.Common;
+using SafeRoute.DTOs.Drivers;
 
-namespace SafeRouteApi.Services.Interfaces;
+namespace SafeRoute.Services.Interfaces;
 
 public interface IDriverService
 {

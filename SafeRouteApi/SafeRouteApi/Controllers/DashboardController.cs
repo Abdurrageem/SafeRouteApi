@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRoute.Controllers
 {
     /// <summary>
     /// API Controller for dashboard - Main app entry point

@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using SafeRouteApi.Data;
+using SafeRoute.Data;
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Models;
+using SafeRoute.Models;
 using Microsoft.AspNetCore.Authorization;
-using SafeRouteApi.DTOs.Auth;
+using SafeRoute.DTOs.Auth;
 
-namespace SafeRouteApi.Controllers;
+namespace SafeRoute.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

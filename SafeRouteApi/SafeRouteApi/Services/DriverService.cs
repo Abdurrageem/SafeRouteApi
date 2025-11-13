@@ -1,12 +1,12 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Data;
-using SafeRouteApi.DTOs.Common;
-using SafeRouteApi.DTOs.Drivers;
-using SafeRouteApi.Services.Interfaces;
+using SafeRoute.Data;
+using SafeRoute.DTOs.Common;
+using SafeRoute.DTOs.Drivers;
+using SafeRoute.Services.Interfaces;
 
-namespace SafeRouteApi.Services;
+namespace SafeRoute.Services;
 
 public class DriverService : IDriverService
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.DTOs.Common;
+namespace SafeRoute.DTOs.Common;
 
 public class PaginationParams
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SafeRouteApi.Models;
+using SafeRoute.Models;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRoute.Controllers
 {
     /// <summary>
     /// API Controller for managing notifications

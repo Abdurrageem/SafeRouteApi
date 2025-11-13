@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Data;
-using SafeRouteApi.Models;
+using SafeRoute.Data;
+using SafeRoute.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRoute.Controllers
 {
     /// <summary>
     /// API Controller for emergency contacts backed by EF Core

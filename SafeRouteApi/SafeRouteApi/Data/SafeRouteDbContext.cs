@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace SafeRouteApi.Data
+namespace SafeRoute.Data
 {
     public class SafeRouteDbContext : DbContext
     {
         public SafeRouteDbContext(DbContextOptions<SafeRouteDbContext> options)
             : base(options) { }
 
-        // Replace model types with local models (ensure they exist under SafeRouteApi.Models)
+        // Replace model types with local models (ensure they exist under SafeRoute.Models)
         public DbSet<Models.Users> Users { get; set; } = default!;
         public DbSet<Models.Companies> Companies { get; set; } = default!;
         public DbSet<Models.Drivers> Drivers { get; set; } = default!;

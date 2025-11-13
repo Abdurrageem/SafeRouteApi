@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using SafeRouteApi.DTOs.Common;
-using SafeRouteApi.DTOs.Routes;
-using SafeRouteApi.Services.Interfaces;
+using SafeRoute.DTOs.Common;
+using SafeRoute.DTOs.Routes;
+using SafeRoute.Services.Interfaces;
 
-namespace SafeRouteApi.Controllers;
+namespace SafeRoute.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

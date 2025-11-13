@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.DTOs.Routes;
+namespace SafeRoute.DTOs.Routes;
 
 public class UpdateRouteStatusDto
 {

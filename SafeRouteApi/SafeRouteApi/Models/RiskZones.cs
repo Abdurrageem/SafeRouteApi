@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.Models
+namespace SafeRoute.Models
 {
     public class RiskZones
     {

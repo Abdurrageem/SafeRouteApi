@@ -1,7 +1,7 @@
-using SafeRouteApi.DTOs.Common;
-using SafeRouteApi.DTOs.Routes;
+using SafeRoute.DTOs.Common;
+using SafeRoute.DTOs.Routes;
 
-namespace SafeRouteApi.Services.Interfaces;
+namespace SafeRoute.Services.Interfaces;
 
 public interface IRouteService
 {

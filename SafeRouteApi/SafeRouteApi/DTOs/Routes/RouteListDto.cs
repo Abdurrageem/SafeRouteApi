@@ -1,4 +1,4 @@
-namespace SafeRouteApi.DTOs.Routes;
+namespace SafeRoute.DTOs.Routes;
 
 public class RouteListDto
 {

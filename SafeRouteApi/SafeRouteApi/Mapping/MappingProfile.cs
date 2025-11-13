@@ -1,9 +1,9 @@
 using AutoMapper;
-using SafeRouteApi.Models;
-using SafeRouteApi.DTOs.Drivers;
-using SafeRouteApi.DTOs.Routes;
+using SafeRoute.Models;
+using SafeRoute.DTOs.Drivers;
+using SafeRoute.DTOs.Routes;
 
-namespace SafeRouteApi.Mapping;
+namespace SafeRoute.Mapping;
 
 public class MappingProfile : Profile
 {

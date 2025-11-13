@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.DTOs.Auth;
+namespace SafeRoute.DTOs.Auth;
 
 public class LoginDto
 {

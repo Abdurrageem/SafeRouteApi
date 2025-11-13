@@ -1,4 +1,4 @@
-namespace SafeRouteApi.DTOs.Drivers;
+namespace SafeRoute.DTOs.Drivers;
 
 public class DriverDetailDto : DriverListDto
 {

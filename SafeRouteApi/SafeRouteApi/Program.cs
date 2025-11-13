@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SafeRouteApi.Data;
+using SafeRoute.Data;
 using System.Text;
 using AutoMapper;
-using SafeRouteApi.Services;
-using SafeRouteApi.Services.Interfaces;
+using SafeRoute.Services;
+using SafeRoute.Services.Interfaces;
 
-namespace SafeRouteApi;
+namespace SafeRoute;
 
 public class Program
 {

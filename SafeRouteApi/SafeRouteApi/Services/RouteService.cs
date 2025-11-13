@@ -1,12 +1,12 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Data;
-using SafeRouteApi.DTOs.Common;
-using SafeRouteApi.DTOs.Routes;
-using SafeRouteApi.Services.Interfaces;
+using SafeRoute.Data;
+using SafeRoute.DTOs.Common;
+using SafeRoute.DTOs.Routes;
+using SafeRoute.Services.Interfaces;
 
-namespace SafeRouteApi.Services;
+namespace SafeRoute.Services;
 
 public class RouteService : IRouteService
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.DTOs.Drivers;
+namespace SafeRoute.DTOs.Drivers;
 
 public class CreateDriverDto
 {

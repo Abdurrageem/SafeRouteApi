@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Data;
-using SafeRouteApi.Models;
+using SafeRoute.Data;
+using SafeRoute.Models;
 
-namespace SafeRouteApi.Services;
+namespace SafeRoute.Services;
 
 public class SeedData
 {

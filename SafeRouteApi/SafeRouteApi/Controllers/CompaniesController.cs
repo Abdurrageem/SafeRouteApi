@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRoute.Controllers
 {
     /// <summary>
     /// API Controller for companies/fleet management

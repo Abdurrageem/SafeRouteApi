@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SafeRouteApi.Data;
-using SafeRouteApi.Models;
+using SafeRoute.Data;
+using SafeRoute.Models;
 
-namespace SafeRouteApi.Controllers
+namespace SafeRoute.Controllers
 {
     /// <summary>
     /// API Controller for managing risk zones (EF-backed)
